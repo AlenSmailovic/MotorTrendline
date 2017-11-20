@@ -6,8 +6,9 @@
 #define ControlPin1 6
 #define ControlPin2 7
 
-#define MIN_VOLTAGE 28    // 3.3V - 0%
-#define MAX_VOLTAGE 255   // 12V  - 100%
+#define NULL_VOLTAGE 0     // 0V   - 0%
+#define MIN_VOLTAGE  28    // 3.3V - 0%
+#define MAX_VOLTAGE  255   // 12V  - 100%
 #define MIN_MAX_DISTANCE (MAX_VOLTAGE - MIN_VOLTAGE)
 
 #define MIN_SECONDS  3
@@ -38,7 +39,42 @@ bool Menu() {
 
 // Alen Smailovic
 void FanController() {
-  // your code goes here
+  // rotate fan in one direction
+  digitalWrite(ControlPin1, HIGH);
+  digitalWrite(ControlPin2, LOW);
+
+  // set minimum voltage on fan
+  int iVoltage = MIN_VOLTAGE;
+  // increase voltage at each step
+  for(int iStep = 0; iStep < IncreaseSeconds; ++iStep) {
+    // set scalar on enable pin
+    analogWrite(EnablePin, iVoltage);
+    delay(1000);
+    // compute voltage for next step
+    iVoltage = iVoltage + (int)(MIN_MAX_DISTANCE / IncreaseSeconds);
+    // make sure don't pass maximum limit
+    if (iVoltage > MAX_VOLTAGE) iVoltage = MAX_VOLTAGE;
+  }
+
+  // set maximum voltage on fan for [FULL_SECONDS] sec
+  iVoltage = MAX_VOLTAGE;
+  analogWrite(EnablePin, iVoltage);
+  delay(FULL_SECONDS * 1000);
+
+  // decrease voltage at each step
+  for(int iStep = 0; iStep < DecreaseSeconds; ++iStep) {
+    // set scalar on enable pin
+    analogWrite(EnablePin, iVoltage);
+    delay(1000);
+    // compute voltage for next step
+    iVoltage = iVoltage - (int)(MIN_MAX_DISTANCE / DecreaseSeconds);
+    // make sure don't pass minimum limit
+    if (iVoltage < MIN_VOLTAGE) iVoltage = MIN_VOLTAGE;
+  }
+
+  // stop the fan
+  iVoltage = NULL_VOLTAGE;
+  analogWrite(EnablePin, iVoltage);
 }
 
 // setup code - to run once
