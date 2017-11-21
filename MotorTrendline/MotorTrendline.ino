@@ -30,10 +30,45 @@ void WriteMemory() {
 
 // Bularca Luciana
 bool Menu() {
-  bool bFlag;
-  
-  // your code goes here
-  
+  bool bFlag = false;
+
+  int iStep = 0;
+  while(iStep < 10) {
+    int iMBPressed = digitalRead(MenuButton);
+    if (iMBPressed == 1) {
+      // increase zone
+      while(!digitalRead(MenuButton)) {
+        if(digitalRead(IncreaseButton)) {
+          IncreaseSeconds++;
+          if (IncreaseSeconds > MAX_SECONDS) IncreaseSeconds = MAX_SECONDS;
+          bFlag = true;
+        }
+        if(digitalRead(DecreaseButton)) {
+          IncreaseSeconds--;
+          if (IncreaseSeconds < MIN_SECONDS) IncreaseSeconds = MIN_SECONDS;
+          bFlag = true;
+        }
+        delay(500);
+      }
+      // decrease zone
+      while(!digitalRead(MenuButton)) {
+        if(digitalRead(IncreaseButton)) {
+          DecreaseSeconds++;
+          if (DecreaseSeconds > MAX_SECONDS) DecreaseSeconds = MAX_SECONDS;
+          bFlag = true;
+        }
+        if(digitalRead(DecreaseButton)) {
+          DecreaseSeconds--;
+          if (DecreaseSeconds < MIN_SECONDS) DecreaseSeconds = MIN_SECONDS;
+          bFlag = true;
+        }
+        delay(500);
+      }
+      return bFlag;
+    }
+    delay(500);
+    iStep++;
+  }
   return bFlag;
 }
 
