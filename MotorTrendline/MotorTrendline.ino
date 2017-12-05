@@ -15,14 +15,18 @@
 #define MAX_SECONDS  15
 #define FULL_SECONDS 20
 
+#define MENU_INPUT 10     // 10 -> 5sec
+#define FAN_LOOP_DELAY 5  // 5  -> 5sec
+
+#define DEBUG false
+
 int IncreaseSeconds = 0;
 int DecreaseSeconds = 0;
 
 // Secu Adrian
 void ReadMemory() {
-  while(EECR & 0X02) {
-    // NOP
-  }
+  while(EECR & 0X02) {}
+  
   EEAR = 0x00;
   EECR = EECR | 0x01;
   IncreaseSeconds = EEDR;
@@ -33,30 +37,26 @@ void ReadMemory() {
 
 // Secu Adrian
 void WriteMemory() {
-  unsigned int address = 0x00; 
-  bool flag = false;
+  int iAddress = 0x00; 
+  bool bFlag = false;
   LOOP:
-    while(EECR & 0x02){
-      //nop
-    }
-    while(SPMCSR & 0x01){
-      //nop
-    }
+    while(EECR & 0x02) {}
+    while(SPMCSR & 0x01) {}
         
-    EEAR = address;
+    EEAR = iAddress;
     
-    if(address== 0x00){
+    if(iAddress == 0x00){
       EEDR = IncreaseSeconds;
-    } else{
+    } else {
       EEDR = DecreaseSeconds;
     } 
  
     EECR = EECR | 0x04;
     EECR = EECR | 0x02;
     
-    if(flag == false){
-      address = 0x01;
-      flag = true;
+    if(bFlag == false) {
+      iAddress = 0x01;
+      bFlag = true;
       goto LOOP;
     }
 }
@@ -66,37 +66,49 @@ bool Menu() {
   bool bFlag = false;
 
   int iStep = 0;
-  while(iStep < 10) {
+  while(iStep < MENU_INPUT) {
     int iMBPressed = digitalRead(MenuButton);
-    if (iMBPressed == 1) {
+    if (iMBPressed == 0) {
+      delay(1000);
+      if (DEBUG) Serial.println("Menu button pressed.");
       // increase zone
-      while(!digitalRead(MenuButton)) {
-        if(digitalRead(IncreaseButton)) {
+      while(digitalRead(MenuButton)) {
+        if(!digitalRead(IncreaseButton)) {
+          delay(500);
+          if (DEBUG) Serial.println("Increase button pressed for UP.");
           IncreaseSeconds++;
           if (IncreaseSeconds > MAX_SECONDS) IncreaseSeconds = MAX_SECONDS;
           bFlag = true;
         }
-        if(digitalRead(DecreaseButton)) {
+        if(!digitalRead(DecreaseButton)) {
+          delay(500);
+          if (DEBUG) Serial.println("Decrease button pressed for UP.");
           IncreaseSeconds--;
           if (IncreaseSeconds < MIN_SECONDS) IncreaseSeconds = MIN_SECONDS;
           bFlag = true;
         }
         delay(500);
       }
+      delay(1000);
       // decrease zone
-      while(!digitalRead(MenuButton)) {
-        if(digitalRead(IncreaseButton)) {
+      while(digitalRead(MenuButton)) {
+        if(!digitalRead(IncreaseButton)) {
+          delay(500);
+          if (DEBUG) Serial.println("Increase button pressed for DOWN.");
           DecreaseSeconds++;
           if (DecreaseSeconds > MAX_SECONDS) DecreaseSeconds = MAX_SECONDS;
           bFlag = true;
         }
-        if(digitalRead(DecreaseButton)) {
+        if(!digitalRead(DecreaseButton)) {
+          delay(500);
+          if (DEBUG) Serial.println("Decrease button pressed for DOWN.");
           DecreaseSeconds--;
           if (DecreaseSeconds < MIN_SECONDS) DecreaseSeconds = MIN_SECONDS;
           bFlag = true;
         }
         delay(500);
       }
+      delay(1000);
       return bFlag;
     }
     delay(500);
@@ -147,6 +159,7 @@ void FanController() {
 
 // setup code - to run once
 void setup() {
+  Serial.begin(9600);
   
   // declare buttons MENU/+/- as INPUT
   pinMode(MenuButton, INPUT);
@@ -158,23 +171,38 @@ void setup() {
   pinMode(ControlPin1, OUTPUT);
   pinMode(ControlPin2, OUTPUT);
 
+  if(DEBUG) Serial.println("Read EEPROM...");
+  
   // read seconds from EEPROM and save into IncreaseSeconds/DecreaseSeconds
   ReadMemory();
 
+  if(DEBUG) Serial.print("Increase = ");
+  if(DEBUG) Serial.println(IncreaseSeconds);
+  if(DEBUG) Serial.print("Decrease = ");
+  if(DEBUG) Serial.println(DecreaseSeconds);
+  
   // menu section; return true if user change IncreaseSeconds/DecreaseSeconds
   bool bVariablesChange = Menu();
 
+  if(DEBUG) Serial.println("Exit from Menu..");
+  if(DEBUG) Serial.print("Increase = ");
+  if(DEBUG) Serial.println(IncreaseSeconds);
+  if(DEBUG) Serial.print("Decrease = ");
+  if(DEBUG) Serial.println(DecreaseSeconds);
+  
   if ( bVariablesChange ) {
     // update seconds into EEPROM according with IncreaseSeconds/DecreaseSeconds
+    if(DEBUG) Serial.println("Update EEPROM..");
     WriteMemory();
   }
 }
 
 // main code - to run repeatedly
 void loop() {
+  if(DEBUG) Serial.println("Fan started..");
   
   // delay of 5 seconds between each loop
-  delay(5000);
+  delay(FAN_LOOP_DELAY * 1000);
 
   // controll the fan speed according with IncreaseSeconds/DecreaseSeconds
   FanController();
