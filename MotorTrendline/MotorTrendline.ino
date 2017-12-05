@@ -20,12 +20,45 @@ int DecreaseSeconds = 0;
 
 // Secu Adrian
 void ReadMemory() {
-  // your code goes here
+  while(EECR & 0X02) {
+    // NOP
+  }
+  EEAR = 0x00;
+  EECR = EECR | 0x01;
+  IncreaseSeconds = EEDR;
+
+  EEAR = 0x01;
+  DecreaseSeconds = EEDR;
 }
 
 // Secu Adrian
 void WriteMemory() {
-  // your code goes here
+  unsigned int address = 0x00; 
+  bool flag = false;
+  LOOP:
+    while(EECR & 0x02){
+      //nop
+    }
+    while(SPMCSR & 0x01){
+      //nop
+    }
+        
+    EEAR = address;
+    
+    if(address== 0x00){
+      EEDR = IncreaseSeconds;
+    } else{
+      EEDR = DecreaseSeconds;
+    } 
+ 
+    EECR = EECR | 0x04;
+    EECR = EECR | 0x02;
+    
+    if(flag == false){
+      address = 0x01;
+      flag = true;
+      goto LOOP;
+    }
 }
 
 // Bularca Luciana
