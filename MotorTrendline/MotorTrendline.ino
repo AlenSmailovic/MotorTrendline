@@ -25,38 +25,58 @@ int DecreaseSeconds = 0;
 
 // Secu Adrian
 void ReadMemory() {
+  // testam prin pooling bitul EEPE(daca o operatie de scriere are loc)
   while(EECR & 0X02) {}
   
+  // setam adresa EEPROM la 0x00
   EEAR = 0x00;
+  // setam EERE(read enable)
   EECR = EECR | 0x01;
+  // variabila IncreaseSeconds primeste valoarea stocata la adresa 0x00
   IncreaseSeconds = EEDR;
 
+  // setam adresa EEPROM la 0x01;
   EEAR = 0x01;
+  //variabila DecreaseSeconds primeste valoarea stocata la adresa 0x01
   DecreaseSeconds = EEDR;
+  // dezactivam read enable
+  EECR = EECR & 0xFE;
 }
 
 // Secu Adrian
 void WriteMemory() {
-  int iAddress = 0x00; 
-  bool bFlag = false;
+  // variabila primeste 0x00
+  unsigned int iAddress = 0x00;  
   LOOP:
+    // pas 1) testam prin pooling bitul EEPE(daca o operatie de scriere are loc)
     while(EECR & 0x02) {}
+    // pas 2) testam daca bootloaderul se scrie in memoria flash 
     while(SPMCSR & 0x01) {}
-        
+
+    // pas 3) setam adresa la 0x00
     EEAR = iAddress;
-    
+
+    // daca adresa este 0x00
     if(iAddress == 0x00){
+      // pas 4) datele ce vor fi inscrise in memorie sunt cele stocate in variabila IncreaseSeconds
       EEDR = IncreaseSeconds;
+      // daca adresa este 0x01
     } else {
+      // pas 4) datele ce vor fi inscrise in memorie sunt cele stocate in variabila DecreaseSeconds
       EEDR = DecreaseSeconds;
     } 
- 
+    // nu verificam intreruperile deoarece nu folosim in program
+
+    // pas 5) setam bitul EEMPE, bitii 7:6 si EEPMx sunt 0 la reset asa ca nu e necesar sa ii stergem noi
     EECR = EECR | 0x04;
+    // pas 6) setam bitul EEPE, start operatie de scriere
     EECR = EECR | 0x02;
     
-    if(bFlag == false) {
+    // daca adresa este 0x00
+    if(iAddress == 0x00) {
+      // incarcam in variabila iAddress valoarea 0x01 
       iAddress = 0x01;
-      bFlag = true;
+      // repetam operatiile pentru noua adresa
       goto LOOP;
     }
 }
