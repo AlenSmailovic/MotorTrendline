@@ -30,13 +30,15 @@ void ReadMemory() {
   
   // setam adresa EEPROM la 0x00
   EEAR = 0x00;
-  // setam EERE(read enable)
+  // setam EERE (read enable)
   EECR = EECR | 0x01;
   // variabila IncreaseSeconds primeste valoarea stocata la adresa 0x00
   IncreaseSeconds = EEDR;
 
   // setam adresa EEPROM la 0x01;
   EEAR = 0x01;
+  // setam EERE (read enable)
+  EECR = EECR | 0x01;
   //variabila DecreaseSeconds primeste valoarea stocata la adresa 0x01
   DecreaseSeconds = EEDR;
   // dezactivam read enable
@@ -95,14 +97,14 @@ bool Menu() {
       while(digitalRead(MenuButton)) {
         if(!digitalRead(IncreaseButton)) {
           delay(500);
-          if (DEBUG) Serial.println("Increase button pressed for UP.");
+          if (DEBUG) Serial.println("Increase button pressed for UP slope.");
           IncreaseSeconds++;
           if (IncreaseSeconds > MAX_SECONDS) IncreaseSeconds = MAX_SECONDS;
           bFlag = true;
         }
         if(!digitalRead(DecreaseButton)) {
           delay(500);
-          if (DEBUG) Serial.println("Decrease button pressed for UP.");
+          if (DEBUG) Serial.println("Decrease button pressed for UP slope.");
           IncreaseSeconds--;
           if (IncreaseSeconds < MIN_SECONDS) IncreaseSeconds = MIN_SECONDS;
           bFlag = true;
@@ -114,14 +116,14 @@ bool Menu() {
       while(digitalRead(MenuButton)) {
         if(!digitalRead(IncreaseButton)) {
           delay(500);
-          if (DEBUG) Serial.println("Increase button pressed for DOWN.");
+          if (DEBUG) Serial.println("Increase button pressed for DOWN slope.");
           DecreaseSeconds++;
           if (DecreaseSeconds > MAX_SECONDS) DecreaseSeconds = MAX_SECONDS;
           bFlag = true;
         }
         if(!digitalRead(DecreaseButton)) {
           delay(500);
-          if (DEBUG) Serial.println("Decrease button pressed for DOWN.");
+          if (DEBUG) Serial.println("Decrease button pressed for DOWN slope.");
           DecreaseSeconds--;
           if (DecreaseSeconds < MIN_SECONDS) DecreaseSeconds = MIN_SECONDS;
           bFlag = true;
