@@ -23,6 +23,10 @@
 int IncreaseSeconds = 0;
 int DecreaseSeconds = 0;
 
+void analogWriteReg(int iValue) {
+  if (EnablePin == 5) OCR0B = iValue;
+}
+
 // Secu Adrian
 void ReadMemory() {
   // testam prin pooling bitul EEPE(daca o operatie de scriere are loc)
@@ -150,7 +154,7 @@ void FanController() {
   // increase voltage at each step
   for(int iStep = 0; iStep < IncreaseSeconds; ++iStep) {
     // set scalar on enable pin
-    analogWrite(EnablePin, iVoltage);
+    analogWriteReg(iVoltage);
     delay(1000);
     // compute voltage for next step
     iVoltage = iVoltage + (int)(MIN_MAX_DISTANCE / IncreaseSeconds);
@@ -160,13 +164,13 @@ void FanController() {
 
   // set maximum voltage on fan for [FULL_SECONDS] sec
   iVoltage = MAX_VOLTAGE;
-  analogWrite(EnablePin, iVoltage);
+  analogWriteReg(iVoltage);
   delay(FULL_SECONDS * 1000);
 
   // decrease voltage at each step
   for(int iStep = 0; iStep < DecreaseSeconds; ++iStep) {
     // set scalar on enable pin
-    analogWrite(EnablePin, iVoltage);
+    analogWriteReg(iVoltage);
     delay(1000);
     // compute voltage for next step
     iVoltage = iVoltage - (int)(MIN_MAX_DISTANCE / DecreaseSeconds);
@@ -176,7 +180,7 @@ void FanController() {
 
   // stop the fan
   iVoltage = NULL_VOLTAGE;
-  analogWrite(EnablePin, iVoltage);
+  analogWriteReg(iVoltage);
 }
 
 // setup code - to run once
@@ -189,7 +193,10 @@ void setup() {
   pinMode(DecreaseButton, INPUT);
 
   // declare DC motor connectors as OUTPUT
-  pinMode(EnablePin, OUTPUT);
+  DDRD = B00100000;
+  TCCR0A = B00100001;
+  TCCR0B = B00000011;
+  
   pinMode(ControlPin1, OUTPUT);
   pinMode(ControlPin2, OUTPUT);
 
