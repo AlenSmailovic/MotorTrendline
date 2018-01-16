@@ -1,10 +1,9 @@
-#define MenuButton     2
-#define IncreaseButton 3 
-#define DecreaseButton 4
+#define MenuButton     B00000100
+#define IncreaseButton B00001000 
+#define DecreaseButton B00010000
 
-#define EnablePin   5
-#define ControlPin1 6
-#define ControlPin2 7
+#define EnablePin      B00100000
+#define ControlPin     B10000000
 
 #define NULL_VOLTAGE 0     // 0V   - 0%
 #define MIN_VOLTAGE  28    // 3.3V - 0%
@@ -18,13 +17,13 @@
 #define MENU_INPUT 10     // 10 -> 5sec
 #define FAN_LOOP_DELAY 5  // 5  -> 5sec
 
-#define DEBUG false
+#define DEBUG true
 
 int IncreaseSeconds = 0;
 int DecreaseSeconds = 0;
 
 void analogWriteReg(int iValue) {
-  if (EnablePin == 5) OCR0B = iValue;
+  OCR0B = iValue;
 }
 
 // Secu Adrian
@@ -91,22 +90,22 @@ void WriteMemory() {
 bool Menu() {
   bool bFlag = false;
 
+  if (DEBUG) Serial.println("Menu loading..");
   int iStep = 0;
   while(iStep < MENU_INPUT) {
-    int iMBPressed = digitalRead(MenuButton);
-    if (iMBPressed == 0) {
+    if ((PIND & MenuButton) == 0) {
       delay(1000);
       if (DEBUG) Serial.println("Menu button pressed.");
       // increase zone
-      while(digitalRead(MenuButton)) {
-        if(!digitalRead(IncreaseButton)) {
+      while((PIND & MenuButton) != 0) {
+        if((PIND & IncreaseButton) == 0) {
           delay(500);
           if (DEBUG) Serial.println("Increase button pressed for UP slope.");
           IncreaseSeconds++;
           if (IncreaseSeconds > MAX_SECONDS) IncreaseSeconds = MAX_SECONDS;
           bFlag = true;
         }
-        if(!digitalRead(DecreaseButton)) {
+        if((PIND & DecreaseButton) == 0) {
           delay(500);
           if (DEBUG) Serial.println("Decrease button pressed for UP slope.");
           IncreaseSeconds--;
@@ -117,15 +116,15 @@ bool Menu() {
       }
       delay(1000);
       // decrease zone
-      while(digitalRead(MenuButton)) {
-        if(!digitalRead(IncreaseButton)) {
+      while((PIND & MenuButton) != 0) {
+        if((PIND & IncreaseButton) == 0) {
           delay(500);
           if (DEBUG) Serial.println("Increase button pressed for DOWN slope.");
           DecreaseSeconds++;
           if (DecreaseSeconds > MAX_SECONDS) DecreaseSeconds = MAX_SECONDS;
           bFlag = true;
         }
-        if(!digitalRead(DecreaseButton)) {
+        if((PIND & DecreaseButton) == 0) {
           delay(500);
           if (DEBUG) Serial.println("Decrease button pressed for DOWN slope.");
           DecreaseSeconds--;
@@ -146,8 +145,7 @@ bool Menu() {
 // Alen Smailovic
 void FanController() {
   // rotate fan in one direction
-  digitalWrite(ControlPin1, HIGH);
-  digitalWrite(ControlPin2, LOW);
+  PIND = ControlPin;
 
   // set minimum voltage on fan
   int iVoltage = MIN_VOLTAGE;
@@ -188,17 +186,13 @@ void setup() {
   Serial.begin(9600);
   
   // declare buttons MENU/+/- as INPUT
-  pinMode(MenuButton, INPUT);
-  pinMode(IncreaseButton, INPUT);
-  pinMode(DecreaseButton, INPUT);
+  PORTD = PORTD & B00000011;
+  PORTD = PORTD | B00011100;
 
   // declare DC motor connectors as OUTPUT
-  DDRD = B00100000;
-  TCCR0A = B00100001;
+  DDRD   = B10100000;
+  TCCR0A = B00000011 | EnablePin;
   TCCR0B = B00000011;
-  
-  pinMode(ControlPin1, OUTPUT);
-  pinMode(ControlPin2, OUTPUT);
 
   if(DEBUG) Serial.println("Read EEPROM...");
   
